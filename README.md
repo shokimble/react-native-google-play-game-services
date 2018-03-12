@@ -1,7 +1,6 @@
 # react-native-google-play-game-services
 
-[![npm version](https://img.shields.io/npm/v/tipsi-stripe.svg?style=flat-square)](https://www.npmjs.com/package/tipsi-stripe)
-[![build status](https://img.shields.io/travis/tipsi/tipsi-stripe/master.svg?style=flat-square)](https://travis-ci.org/tipsi/tipsi-stripe)
+[![npm version](https://img.shields.io/npm/v/react-native-google-play-game-services.svg?style=flat-square)]$(https://www.npmjs.com/package/react-native-google-play-game-services)
 
 React Native Google Play Game Services bindings for Android (Google Play Game Services for iOS no longer exists).
 
