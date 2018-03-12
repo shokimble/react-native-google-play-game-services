@@ -2,17 +2,30 @@
 {
   "name": "react-native-google-play-game-services",
   "version": "1.0.0",
-  "description": "",
+  "description": "Google Play Game Services bindings for React Native",
   "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shokimble/react-native-google-play-game-services"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
-    "react-native"
+    "react-native",
+    "google play",
+    "google play game services",
+    "android"
   ],
-  "author": "",
-  "license": "",
+  "bugs": {
+    "url": "https://github.com/shokimble/react-native-google-play-game-services/issues"
+  },
+  "homepage": "https://github.com/shokimble/react-native-google-play-game-services#readme",
+  "author": "Kimble Young",
+  "license": "MIT",
   "peerDependencies": {
-    "react-native": "^0.41.2"
+    "react": ">=15.4.0 || >=16.x",
+    "react-native": ">=0.40"
   }
 }
+
