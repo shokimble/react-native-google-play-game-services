@@ -18,7 +18,7 @@ This package was built for React Native `0.40` or greater! If you're still on an
 
 ## Before installing
 
-It is highly recommended that prior to installing this library that you make yourself familiar with Google Play Game Services and [https://developers.google.com/games/services/android/quickstart](how to get started). 
+It is highly recommended that prior to installing this library that you make yourself familiar with Google Play Game Services and [how to get started](https://developers.google.com/games/services/android/quickstart). 
 
 This document does not cover those steps but you will need to follow them prior to getting an app up and running.
 
