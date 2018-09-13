@@ -70,9 +70,7 @@ In your 'android/app/src/main/AndroidManifest.xml':
 <application
         ...
 +      <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
-+      <meta-data android:name="com.google.android.gms.version"
-                   android:value="@integer/google_play_services_version"/>
-
++      <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
         ...
 </application>
 ```
