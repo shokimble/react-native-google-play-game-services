@@ -64,7 +64,7 @@ dependencies {
 ...
 ```
 
-In your 'android/app/src/main/AndroidManifest.xml':
+In your `android/app/src/main/AndroidManifest.xml`:
 
 ```diff
 <application
@@ -75,14 +75,15 @@ In your 'android/app/src/main/AndroidManifest.xml':
 </application>
 ```
 
-In your 'android/app/src/main/res/values/strings.xml' (create it if it doesn't exist) you need to add your app id:
+In your `android/app/src/main/res/values/strings.xml` (create it if it doesn't exist) you need to add your app id:
 
-``diff
+```diff
 <resources>
     ...
     <string name="app_name">gpsgexample</string>
     <string name="app_id">{your app id from google play console - 10-12 digit number}</string>
 </resources>
+```
 
 
 Lastly ensure that you have Google Play Services installed on the target device.
