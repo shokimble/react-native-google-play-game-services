@@ -81,7 +81,7 @@ In your `android/app/src/main/res/values/strings.xml` (create it if it doesn't e
 <resources>
     ...
     <string name="app_name">gpsgexample</string>
-    <string name="app_id">{your app id from google play console - 10-12 digit number}</string>
++   <string name="app_id">{your app id from google play console - 10-12 digit number}</string>
 </resources>
 ```
 
