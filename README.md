@@ -1,6 +1,6 @@
 # react-native-google-play-game-services
 
-[![npm version](https://img.shields.io/npm/v/react-native-google-play-game-services.svg?style=flat-square)]$(https://www.npmjs.com/package/react-native-google-play-game-services)
+[![npm version](https://img.shields.io/npm/v/react-native-google-play-game-services.svg?style=flat-square)](https://www.npmjs.com/package/react-native-google-play-game-services)
 
 React Native Google Play Game Services bindings for Android (Google Play Game Services for iOS no longer exists).
 
@@ -18,7 +18,7 @@ This package was built for React Native `0.40` or greater! If you're still on an
 
 ## Before installing
 
-It is highly recommended that prior to installing this library that you make yourself familiar with Google Play Game Services and [https://developers.google.com/games/services/android/quickstart](how to get started). 
+It is highly recommended that prior to installing this library that you make yourself familiar with Google Play Game Services and [how to get started](https://developers.google.com/games/services/android/quickstart). 
 
 This document does not cover those steps but you will need to follow them prior to getting an app up and running.
 
@@ -64,27 +64,26 @@ dependencies {
 ...
 ```
 
-In your 'android/app/src/main/AndroidManifest.xml':
+In your `android/app/src/main/AndroidManifest.xml`:
 
 ```diff
-<application
+<application>
         ...
 +      <meta-data android:name="com.google.android.gms.games.APP_ID" android:value="@string/app_id" />
-+      <meta-data android:name="com.google.android.gms.version"
-                   android:value="@integer/google_play_services_version"/>
-
++      <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
         ...
 </application>
 ```
 
-In your 'android/app/src/main/res/values/strings.xml' (create it if it doesn't exist) you need to add your app id:
+In your `android/app/src/main/res/values/strings.xml` (create it if it doesn't exist) you need to add your app id:
 
-``diff
+```diff
 <resources>
     ...
     <string name="app_name">gpsgexample</string>
     <string name="app_id">{your app id from google play console - 10-12 digit number}</string>
 </resources>
+```
 
 
 Lastly ensure that you have Google Play Services installed on the target device.
