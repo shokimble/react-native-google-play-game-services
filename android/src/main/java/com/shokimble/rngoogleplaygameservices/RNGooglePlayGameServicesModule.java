@@ -31,6 +31,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.drive.Drive;
 import com.google.android.gms.games.AchievementsClient;
 import com.google.android.gms.games.AnnotatedData;
 import com.google.android.gms.games.EventsClient;
@@ -46,7 +47,10 @@ import com.google.android.gms.tasks.OnCompleteListener;
 import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
-
+import com.google.android.gms.games.snapshot.Snapshot;
+import com.google.android.gms.games.snapshot.SnapshotMetadata;
+import com.google.android.gms.games.SnapshotsClient;
+import com.google.android.gms.games.SnapshotsClient.DataOrConflict;
 /*
 TODO implement:
 
@@ -64,15 +68,17 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   private AchievementsClient mAchievementsClient;
   private LeaderboardsClient mLeaderboardsClient;
   private PlayersClient mPlayersClient;
-
+  private SnapshotsClient mSnapshotsClient;
   private Promise signInPromise;
   private Promise achievementPromise;
   private Promise leaderboardPromise;
+  private Snapshot workingSnapshot;
 
   //activity result code
   private static final int RC_SIGN_IN = 9001;
   private static final int RC_ACHIEVEMENT_UI = 9003;
   private static final int RC_LEADERBOARD_UI = 9004;
+  private static final int RC_REQUEST_PERMISSION_SUCCESS_CONTINUE_FILE_CREATION = 9005;
 
   // tag for debug logging
   private static final String TAG = "shorngames";
@@ -244,6 +250,52 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void discardAndCloseSnapshot( final Promise promise ) {
+    if(mSnapshotsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    if(workingSnapshot == null) {
+      promise.resolve(null);
+      return;
+    }
+    mSnapshotsClient.discardAndClose(workingSnapshot);
+    workingSnapshot = null;
+    promise.resolve(null);
+  }
+
+  @ReactMethod
+  public void loadSnapshot(String name, final Promise promise ) {
+    if(mSnapshotsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    mSnapshotsClient.open(name, true, SnapshotsClient.RESOLUTION_POLICY_LONGEST_PLAYTIME)
+      .addOnSuccessListener(new OnSuccessListener<DataOrConflict<Snapshot>>() {
+        @Override
+        public void onSuccess(DataOrConflict<Snapshot> result) {
+          if (!result.isConflict()) {
+            try{
+              workingSnapshot = result.getData();
+              byte[] byteArray = workingSnapshot.getSnapshotContents().readFully();
+              promise.resolve(new String(byteArray, "UTF-8"));
+              return;
+            }catch(Exception e){
+              promise.reject("Error reading snapshot!");
+            }
+          }
+          promise.resolve(null);
+        }
+      })
+      .addOnFailureListener(new OnFailureListener() {
+        @Override
+        public void onFailure(@NonNull Exception e) {
+          promise.reject("LoadSnapshot: FAILURE - "+e.getMessage());
+        }
+      });
+  }
+
+  @ReactMethod
   public void setLeaderboardScore(String id, int score, final Promise promise) {
     if(mLeaderboardsClient == null) {
       promise.reject("Please sign in first");
@@ -357,15 +409,23 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   private void onConnected(GoogleSignInAccount googleSignInAccount) {
     Log.d(TAG, "onConnected(): connected to Google APIs");
 
+    if (!GoogleSignIn.hasPermissions( googleSignInAccount, Drive.SCOPE_APPFOLDER)) {
+      GoogleSignIn.requestPermissions(
+              getCurrentActivity(),
+              RC_REQUEST_PERMISSION_SUCCESS_CONTINUE_FILE_CREATION,
+              googleSignInAccount,
+              Drive.SCOPE_APPFOLDER);
+    }
+
     Games.getGamesClient(getCurrentActivity(),googleSignInAccount)
          .setViewForPopups(getCurrentActivity().getWindow().getDecorView().findViewById(android.R.id.content));
 
     mAchievementsClient = Games.getAchievementsClient(getCurrentActivity(), googleSignInAccount);
-    //TODO add these later
     mLeaderboardsClient = Games.getLeaderboardsClient(getCurrentActivity(), googleSignInAccount);
-    //mEventsClient = Games.getEventsClient(this, googleSignInAccount);
     mPlayersClient = Games.getPlayersClient(getCurrentActivity(), googleSignInAccount);
-
+    mSnapshotsClient = Games.getSnapshotsClient(getCurrentActivity(), googleSignInAccount);
+    //TODO add these later
+    //mEventsClient = Games.getEventsClient(this, googleSignInAccount);
   }
 
 
@@ -374,9 +434,10 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
     Log.d(TAG, "onDisconnected()");
 
     mAchievementsClient = null;
-    mPlayersClient = null;
     mLeaderboardsClient = null;
-    //PlayersClient = null;
+    mPlayersClient = null;
+    mSnapshotsClient = null;
+    //mEventsClient = null;
 
   }
 }
