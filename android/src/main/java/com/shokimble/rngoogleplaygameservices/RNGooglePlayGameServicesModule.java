@@ -357,6 +357,9 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   private void onConnected(GoogleSignInAccount googleSignInAccount) {
     Log.d(TAG, "onConnected(): connected to Google APIs");
 
+    Games.getGamesClient(getCurrentActivity(),googleSignInAccount)
+         .setViewForPopups(getCurrentActivity().getWindow().getDecorView().findViewById(android.R.id.content));
+
     mAchievementsClient = Games.getAchievementsClient(getCurrentActivity(), googleSignInAccount);
     //TODO add these later
     mLeaderboardsClient = Games.getLeaderboardsClient(getCurrentActivity(), googleSignInAccount);
