@@ -36,6 +36,8 @@ import com.google.android.gms.games.AnnotatedData;
 import com.google.android.gms.games.EventsClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.LeaderboardsClient;
+import com.google.android.gms.games.leaderboard.LeaderboardScore;
+import com.google.android.gms.games.leaderboard.LeaderboardVariant;
 import com.google.android.gms.games.Player;
 import com.google.android.gms.games.PlayersClient;
 import com.google.android.gms.games.event.Event;
@@ -208,7 +210,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       return;
     }
     mAchievementsClient.reveal(id);
-    promise.resolve("Unlocked achievement");
+    promise.resolve("Revealed achievement");
   }
 
   @ReactMethod
@@ -228,7 +230,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       return;
     }
     mAchievementsClient.increment(id, inc);
-    promise.resolve("Unlocked incremented");
+    promise.resolve("Incremented achievement");
   }
 
   @ReactMethod
@@ -238,7 +240,46 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       return;
     }
     mAchievementsClient.setSteps(id, steps);
-    promise.resolve("Unlocked incremented");
+    promise.resolve("Achievement setps' set");
+  }
+
+  @ReactMethod
+  public void setLeaderboardScore(String id, int score, final Promise promise) {
+    if(mLeaderboardsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    mLeaderboardsClient.submitScore(id, score);
+    promise.resolve("Leaderboard score set");
+  }
+
+  @ReactMethod
+  public void getLeaderboardScore(String id, final Promise promise) {
+    if(mLeaderboardsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    mLeaderboardsClient.loadCurrentPlayerLeaderboardScore(id, LeaderboardVariant.TIME_SPAN_ALL_TIME, LeaderboardVariant.COLLECTION_PUBLIC)
+      .addOnSuccessListener(new OnSuccessListener<AnnotatedData<LeaderboardScore>>() {
+        @Override
+        public void onSuccess(AnnotatedData<LeaderboardScore> leaderboardScoreAnnotatedData) {
+          if (leaderboardScoreAnnotatedData == null) {
+            promise.resolve(null);
+            return;
+          }
+          if (leaderboardScoreAnnotatedData.get() == null) {
+            promise.resolve(null);
+            return;
+          }
+          promise.resolve(""+leaderboardScoreAnnotatedData.get().getRawScore());
+        }
+      })
+      .addOnFailureListener(new OnFailureListener() {
+        @Override
+        public void onFailure(@NonNull Exception e) {
+          promise.reject("LeaderBoard: FAILURE");
+        }
+      });
   }
 
   @ReactMethod

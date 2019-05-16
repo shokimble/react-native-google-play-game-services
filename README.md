@@ -4,7 +4,7 @@
 
 React Native Google Play Game Services bindings for Android (Google Play Game Services for iOS no longer exists).
 
-Currently implements achievements but events, leaderboards etc will be added on request.
+Currently implements achievements and leaderboards. Events and more etc will be added on request.
 
 ## Requirements
 
@@ -18,7 +18,7 @@ This package was built for React Native `0.40` or greater! If you're still on an
 
 ## Before installing
 
-It is highly recommended that prior to installing this library that you make yourself familiar with Google Play Game Services and [how to get started](https://developers.google.com/games/services/android/quickstart). 
+It is highly recommended that prior to installing this library that you make yourself familiar with Google Play Game Services and [how to get started](https://developers.google.com/games/services/android/quickstart).
 
 This document does not cover those steps but you will need to follow them prior to getting an app up and running.
 
@@ -106,7 +106,7 @@ import RNGooglePlayGameServices from 'react-native-google-play-game-services';
 // SIGN in prior to doing anything - silent sign in works for those who are already logged into google play gaming services
 RNGooglePlayGameServices.signInSilently()
 	.then((msg) => {
-		
+
 	})
 	.catch((msg) => {
 		//silent sign in didn't work so show the dialog instead
@@ -119,28 +119,58 @@ RNGooglePlayGameServices.unlockAchievement("CgkI8oW5sqwOEAIQAQ")
         .then((msg) => { console.log("unlocked achievement -  ",msg)})
         .catch((msg) => { console.log("not signed in - ",msg)});
 
+//reveal an achievement - note the id supplied is obtained by creating a new achievement in the play console
+RNGooglePlayGameServices.revealAchievement("CgkI8oW5sqwOEAIQAQ")
+        .then((msg) => { console.log("achievement revealed -  ",msg)})
+        .catch((msg) => { console.log("not signed in - ",msg)});
+
 //increment an achievement - note the id supplied is obtained by creating a new achievement in the play console
 RNGooglePlayGameServices.incrementAchievement("CgkI8oW5sqwOEAIQAw",10)
         .then((msg) => { console.log("incremented achievement -  ",msg)})
 		.catch((msg) => { console.log("not signed in - ",msg)});
-		
 
-//show player the achievements list 
+//set an achievement to specific value - note the id supplied is obtained by creating a new achievement in the play console
+RNGooglePlayGameServices.setAchievementSteps("CgkI8oW5sqwOEAIQAw",7)
+        .then((msg) => { console.log("set achievement -  ",msg)})
+        .catch((msg) => { console.log("not signed in - ",msg)});
+
+
+//show player the achievements list
 //note: should also catch errors here
-RNGooglePlayGameServices.showAchievements();		
+RNGooglePlayGameServices.showAchievements();
+
+
+//set the player score for an specifil leaderboard
+//note: should also catch errors here
+RNGooglePlayGameServices.setLeaderboardScore("AbCI8oW5sqwOEAXXXX",200);
+
+//get the player score for an specifil leaderboard
+//note: should also catch errors here
+RNGooglePlayGameServices.getLeaderboardScore("AbCI8oW5sqwOEAXXXX")
+    .then((score)=>console.log('Score:', score))
+    .catch(error=>console.log('Error retrieving score:', error))
+
+//show all leaderboards
+//note: should also catch errors here
+RNGooglePlayGameServices.showAllLeaderboards();
+
+//show specific leaderboard
+//note: should also catch errors here
+RNGooglePlayGameServices.showLeaderboard("AbCI8oW5sqwOEAXXXX");
+
 
 // Am I signed in?
 RNGooglePlayGameServices.isSignedIn()
         .then((msg) => { console.log("signed in - ",msg)})
         .catch((msg) => { console.log("not signed in - ",msg)});
 
-//sign out 
+//sign out
 RNGooglePlayGameServices.signOut()
         .then((msg) => { console.log("signed out - ",msg)})
 		.catch((msg) => { console.log("not signed out - ",msg)});
-		
 
-		
+
+
 ```
 
 
