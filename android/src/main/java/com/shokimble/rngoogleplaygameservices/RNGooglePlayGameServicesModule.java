@@ -65,10 +65,12 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
 
   private Promise signInPromise;
   private Promise achievementPromise;
+  private Promise leaderboardPromise;
 
   //activity result code
   private static final int RC_SIGN_IN = 9001;
   private static final int RC_ACHIEVEMENT_UI = 9003;
+  private static final int RC_LEADERBOARD_UI = 9004;
 
   // tag for debug logging
   private static final String TAG = "shorngames";
@@ -81,6 +83,9 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
 
       if (requestCode == RC_ACHIEVEMENT_UI && achievementPromise != null)
         achievementPromise.resolve("Achievement dialog complete");
+
+      if (requestCode == RC_LEADERBOARD_UI && leaderboardPromise != null)
+        leaderboardPromise.resolve("Leaderboard dialog complete");
 
       if (requestCode == RC_SIGN_IN) {
         Log.d(TAG, "RC_SIGN_IN result returned");
@@ -250,13 +255,37 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       return;
     }
 
-    achievementPromise = promise;
+    leaderboardPromise = promise;
 
     mLeaderboardsClient.getAllLeaderboardsIntent()
             .addOnSuccessListener(new OnSuccessListener<Intent>() {
               @Override
               public void onSuccess(Intent intent) {
-               getCurrentActivity().startActivityForResult(intent, RC_ACHIEVEMENT_UI);
+               getCurrentActivity().startActivityForResult(intent, RC_LEADERBOARD_UI);
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+               promise.reject("Could not launch leaderboards intent");
+              }
+            });
+  }
+
+  @ReactMethod
+  public void showLeaderboard(String id, final Promise promise) {
+    if(mLeaderboardsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+
+    leaderboardPromise = promise;
+
+    mLeaderboardsClient.getLeaderboardIntent(id)
+            .addOnSuccessListener(new OnSuccessListener<Intent>() {
+              @Override
+              public void onSuccess(Intent intent) {
+               getCurrentActivity().startActivityForResult(intent, RC_LEADERBOARD_UI);
               }
             })
             .addOnFailureListener(new OnFailureListener() {
