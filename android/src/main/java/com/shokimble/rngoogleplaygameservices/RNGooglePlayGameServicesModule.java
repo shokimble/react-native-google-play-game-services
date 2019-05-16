@@ -60,6 +60,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
 
   private GoogleSignInClient mGoogleSignInClient;
   private AchievementsClient mAchievementsClient;
+  private LeaderboardsClient mLeaderboardsClient;
   private PlayersClient mPlayersClient;
 
   private Promise signInPromise;
@@ -242,18 +243,41 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
             });
   }
 
+  @ReactMethod
+  public void showAllLeaderboards(final Promise promise) {
+    if(mLeaderboardsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
 
+    achievementPromise = promise;
+
+    mLeaderboardsClient.getAllLeaderboardsIntent()
+            .addOnSuccessListener(new OnSuccessListener<Intent>() {
+              @Override
+              public void onSuccess(Intent intent) {
+               getCurrentActivity().startActivityForResult(intent, RC_ACHIEVEMENT_UI);
+              }
+            })
+            .addOnFailureListener(new OnFailureListener() {
+              @Override
+              public void onFailure(@NonNull Exception e) {
+               promise.reject("Could not launch leaderboards intent");
+              }
+            });
+  }
 
   private void onConnected(GoogleSignInAccount googleSignInAccount) {
     Log.d(TAG, "onConnected(): connected to Google APIs");
 
     mAchievementsClient = Games.getAchievementsClient(getCurrentActivity(), googleSignInAccount);
     //TODO add these later
-    //mLeaderboardsClient = Games.getLeaderboardsClient(this, googleSignInAccount);
+    mLeaderboardsClient = Games.getLeaderboardsClient(getCurrentActivity(), googleSignInAccount);
     //mEventsClient = Games.getEventsClient(this, googleSignInAccount);
     mPlayersClient = Games.getPlayersClient(getCurrentActivity(), googleSignInAccount);
 
   }
+
 
 
   private void onDisconnected() {
@@ -261,7 +285,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
 
     mAchievementsClient = null;
     mPlayersClient = null;
-    //LeaderboardsClient = null;
+    mLeaderboardsClient = null;
     //PlayersClient = null;
 
   }
