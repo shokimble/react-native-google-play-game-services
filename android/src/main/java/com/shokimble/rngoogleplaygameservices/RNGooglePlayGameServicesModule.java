@@ -201,8 +201,15 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
             });
   }
 
-
-
+  @ReactMethod
+  public void revealAchievement(String id, final Promise promise) {
+    if(mAchievementsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    mAchievementsClient.reveal(id);
+    promise.resolve("Unlocked achievement");
+  }
 
   @ReactMethod
   public void unlockAchievement(String id, final Promise promise) {
@@ -221,6 +228,16 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       return;
     }
     mAchievementsClient.increment(id, inc);
+    promise.resolve("Unlocked incremented");
+  }
+
+  @ReactMethod
+  public void setAchievementSteps(String id, int steps, final Promise promise) {
+    if(mAchievementsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    mAchievementsClient.setSteps(id, steps);
     promise.resolve("Unlocked incremented");
   }
 
