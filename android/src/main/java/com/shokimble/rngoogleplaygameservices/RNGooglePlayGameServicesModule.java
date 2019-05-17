@@ -49,14 +49,17 @@ import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.android.gms.games.snapshot.Snapshot;
 import com.google.android.gms.games.snapshot.SnapshotMetadata;
+import com.google.android.gms.games.snapshot.SnapshotMetadataChange;
 import com.google.android.gms.games.SnapshotsClient;
 import com.google.android.gms.games.SnapshotsClient.DataOrConflict;
+import com.google.android.gms.games.SnapshotsClient.SnapshotConflict;
+
 /*
 TODO implement:
 
 PlayersClient functions so you can retrieve player name - https://developers.google.com/games/services/android/signin
 
-Events, leaderboards etc
+Events, etc
  */
 
 
@@ -64,6 +67,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
 
   private final ReactApplicationContext reactContext;
 
+  private GoogleSignInAccount googleSignInAccount;
   private GoogleSignInClient mGoogleSignInClient;
   private AchievementsClient mAchievementsClient;
   private LeaderboardsClient mLeaderboardsClient;
@@ -265,26 +269,67 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   }
 
   @ReactMethod
+  public void commitAndCloseSnapshot(String data, String description, final Promise promise ) {
+    if(mSnapshotsClient == null) {
+      promise.reject("Please sign in first");
+      return;
+    }
+    if(workingSnapshot == null) {
+      promise.resolve(null);
+      return;
+    }
+    try{
+      SnapshotMetadataChange.Builder mc = new SnapshotMetadataChange.Builder();
+      mc.fromMetadata(workingSnapshot.getMetadata());
+      mc.setDescription(description);
+      workingSnapshot.getSnapshotContents().writeBytes(data.getBytes());
+      mSnapshotsClient.commitAndClose(workingSnapshot, mc.build());
+      workingSnapshot = null;
+      promise.resolve(null);
+    }catch(Exception e){
+      promise.reject("Error commiting Snapshot: "+e.getMessage());
+    }
+  }
+
+  @ReactMethod
   public void loadSnapshot(String name, final Promise promise ) {
     if(mSnapshotsClient == null) {
       promise.reject("Please sign in first");
       return;
     }
-    mSnapshotsClient.open(name, true, SnapshotsClient.RESOLUTION_POLICY_LONGEST_PLAYTIME)
+    this.requestScopeAppFolder();
+
+    mSnapshotsClient.open(name, true, SnapshotsClient.RESOLUTION_POLICY_MANUAL)
       .addOnSuccessListener(new OnSuccessListener<DataOrConflict<Snapshot>>() {
         @Override
         public void onSuccess(DataOrConflict<Snapshot> result) {
           if (!result.isConflict()) {
             try{
               workingSnapshot = result.getData();
-              byte[] byteArray = workingSnapshot.getSnapshotContents().readFully();
-              promise.resolve(new String(byteArray, "UTF-8"));
-              return;
+              WritableMap map = Arguments.createMap();
+              map.putBoolean("isConflict", false);
+              map.putString("data",new String(workingSnapshot.getSnapshotContents().readFully(), "UTF-8"));
+              promise.resolve(map);
             }catch(Exception e){
+              workingSnapshot = null;
               promise.reject("Error reading snapshot!");
             }
+            return;
           }
-          promise.resolve(null);
+          try{
+            SnapshotConflict conflict = result.getConflict();
+            workingSnapshot = conflict.getSnapshot();
+            Snapshot conflictSnapshot = conflict.getConflictingSnapshot();
+            mSnapshotsClient.resolveConflict(conflict.getConflictId(), workingSnapshot);
+            WritableMap map = Arguments.createMap();
+            map.putBoolean("isConflict", true);
+            map.putString("data",new String(workingSnapshot.getSnapshotContents().readFully(),"UTF-8"));
+            map.putString("conflictData",new String(conflictSnapshot.getSnapshotContents().readFully(),"UTF-8"));
+            promise.resolve(map);
+          }catch(Exception e){
+            workingSnapshot = null;
+            promise.reject("Error reading snapshot!");
+          }
         }
       })
       .addOnFailureListener(new OnFailureListener() {
@@ -406,9 +451,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
             });
   }
 
-  private void onConnected(GoogleSignInAccount googleSignInAccount) {
-    Log.d(TAG, "onConnected(): connected to Google APIs");
-
+  private void requestScopeAppFolder(){
     if (!GoogleSignIn.hasPermissions( googleSignInAccount, Drive.SCOPE_APPFOLDER)) {
       GoogleSignIn.requestPermissions(
               getCurrentActivity(),
@@ -416,6 +459,11 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
               googleSignInAccount,
               Drive.SCOPE_APPFOLDER);
     }
+  }
+
+  private void onConnected(GoogleSignInAccount googleSignInAccount) {
+    Log.d(TAG, "onConnected(): connected to Google APIs");
+    this.googleSignInAccount = googleSignInAccount;
 
     Games.getGamesClient(getCurrentActivity(),googleSignInAccount)
          .setViewForPopups(getCurrentActivity().getWindow().getDecorView().findViewById(android.R.id.content));
@@ -433,11 +481,11 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   private void onDisconnected() {
     Log.d(TAG, "onDisconnected()");
 
+    googleSignInAccount = null;
     mAchievementsClient = null;
     mLeaderboardsClient = null;
     mPlayersClient = null;
     mSnapshotsClient = null;
     //mEventsClient = null;
-
   }
 }

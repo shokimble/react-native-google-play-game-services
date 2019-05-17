@@ -4,7 +4,7 @@
 
 React Native Google Play Game Services bindings for Android (Google Play Game Services for iOS no longer exists).
 
-Currently implements achievements and leaderboards. Events and more etc will be added on request.
+Currently implements achievements, leaderboards, snapshots (saved games). Events and more will be added on request.
 
 ## Requirements
 
@@ -157,6 +157,20 @@ RNGooglePlayGameServices.showAllLeaderboards();
 //show specific leaderboard
 //note: should also catch errors here
 RNGooglePlayGameServices.showLeaderboard("AbCI8oW5sqwOEAXXXX");
+
+//Load a saved game:
+RNGooglePlayGameServices.loadSnapshot("my_game").then(res=>{
+    console.log(res);
+}).catch(error=>{
+    console.log('Error loading game:', error);
+});
+
+// Once you've loaded a game, you can close it or update it.
+// To close it:
+RNGooglePlayGameServices.discardAndCloseSnapshot();
+
+// To write / overwrite it:
+RNGooglePlayGameServices.commitAndCloseSnapshot("new saved data", "some description");
 
 
 // Am I signed in?
