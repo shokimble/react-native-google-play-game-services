@@ -90,16 +90,14 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
           GoogleSignInAccount account = task.getResult(ApiException.class);
           onConnected(account);
           if (signInPromise != null)
-            signInPromise.resolve("Signed in");
+            handSignInResult(promise);
 
         } catch (ApiException apiException) {
           onDisconnected();
-          if (signInPromise != null)
-            signInPromise.reject("Can't sign in");
+          handSignInResult(promise, true);
         }
       }
     }
-
   };
 
   public RNGooglePlayGameServicesModule (ReactApplicationContext reactContext)  {
@@ -109,8 +107,6 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
     reactContext.addActivityEventListener(mActivityEventListener);
 
     //initialise client
-
-
     //mGoogleSignInClient = GoogleSignIn.getClient(getCurrentActivity(),
     //    new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build());
 
@@ -130,6 +126,8 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       promise.reject("not signed in");
   }
 
+  // +AS:20190504 TODO: implement normal signin here
+
   @ReactMethod
   public void signInSilently(final Promise promise) {
     Log.d(TAG, "signInSilently()");
@@ -142,28 +140,43 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
                 if (task.isSuccessful()) {
                   Log.d(TAG, "signInSilently(): success");
                   onConnected(task.getResult());
-                  mPlayersClient.getCurrentPlayer().addOnSuccessListener(new OnSuccessListener<Player>() {
-                    @Override
-                    public void onSuccess(Player player) {
-                      promise.resolve(player.getPlayerId());
-                    }
-                  })
-                  .addOnFailureListener(new OnFailureListener()
-                  {
-                    @Override
-                    public void onFailure(Exception e) {
-                      onDisconnected();
-                      promise.reject("silent sign in failed");
-                    }
-                  });
+                  handSignInResult(promise);
                 } else {
                   Log.d(TAG, "signInSilently(): failure", task.getException());
                   onDisconnected();
-                  promise.reject("silent sign in failed");
+                  handSignInResult(promise, true);
                 }
               }
             }
     );
+  }
+
+  private void handSignInResult(final Promise promise, boolean isPreFailed = false)
+  {
+    if (!isPreFailed)
+    {
+      mPlayersClient.getCurrentPlayer().addOnSuccessListener(new OnSuccessListener<Player>() {
+        @Override
+        public void onSuccess(Player player) {
+          promise.resolve(player.getPlayerId());
+        }
+      })
+      .addOnFailureListener(new OnFailureListener()
+      {
+        @Override
+        public void onFailure(Exception e) {
+          onDisconnected();
+          handSignInResult(promise, true);
+        }
+      });
+    }
+    else
+    {
+      if (promise != null)
+      {
+        promise.reject("silent sign in failed");
+      }
+    }
   }
 
   @ReactMethod
