@@ -1,4 +1,3 @@
-
 package com.shokimble.rngoogleplaygameservices;
 
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -31,6 +30,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.games.*;
 import com.google.android.gms.games.AchievementsClient;
 import com.google.android.gms.games.AnnotatedData;
 import com.google.android.gms.games.EventsClient;
@@ -90,16 +90,14 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
           GoogleSignInAccount account = task.getResult(ApiException.class);
           onConnected(account);
           if (signInPromise != null)
-            signInPromise.resolve("Signed in");
+            handleSignInResult(promise);
 
         } catch (ApiException apiException) {
           onDisconnected();
-          if (signInPromise != null)
-            signInPromise.reject("Can't sign in");
+          handleSignInResult(promise, true);
         }
       }
     }
-
   };
 
   public RNGooglePlayGameServicesModule (ReactApplicationContext reactContext)  {
@@ -109,8 +107,6 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
     reactContext.addActivityEventListener(mActivityEventListener);
 
     //initialise client
-
-
     //mGoogleSignInClient = GoogleSignIn.getClient(getCurrentActivity(),
     //    new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_GAMES_SIGN_IN).build());
 
@@ -130,6 +126,8 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
       promise.reject("not signed in");
   }
 
+  // +AS:20190504 TODO: implement normal signin here
+
   @ReactMethod
   public void signInSilently(final Promise promise) {
     Log.d(TAG, "signInSilently()");
@@ -142,15 +140,67 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
                 if (task.isSuccessful()) {
                   Log.d(TAG, "signInSilently(): success");
                   onConnected(task.getResult());
-                  promise.resolve("silent sign in successful");
+                  handleSignInResult(promise);
                 } else {
                   Log.d(TAG, "signInSilently(): failure", task.getException());
                   onDisconnected();
-                  promise.reject("silent sign in failed");
+                  handleSignInResult(promise, true);
                 }
               }
             }
     );
+  }
+
+  private void handleSignInResult(final Promise promise, boolean isPreFailed = false)
+  {
+    if (!isPreFailed)
+    {
+      mPlayersClient.getCurrentPlayer().addOnSuccessListener(new OnSuccessListener<Player>() {
+        @Override
+        public void onSuccess(Player player) {
+
+          JSONObject result = new JSONObject();
+          JSONObject userInfo = new JSONObject();
+
+          try {
+            userInfo.put("google_id", player.getPlayerId());
+            userInfo.put("name", player.getDisplayName());
+            userInfo.put("avatar_url", player.getIconImageUri());
+            result.put("result", true);
+            result.put("data", userInfo);
+
+          } catch (JSONException e) {
+            e.printStackTrace();
+          }
+
+          promise.resolve(result.toString());
+        }
+      })
+      .addOnFailureListener(new OnFailureListener()
+      {
+        @Override
+        public void onFailure(Exception e) {
+          onDisconnected();
+          handleSignInResult(promise, true);
+        }
+      });
+    }
+    else
+    {
+      if (promise != null)
+      {
+        JSONObject result = new JSONObject();
+
+        try {
+          result.put("result", false);
+
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+
+        promise.reject(result.toString());
+      }
+    }
   }
 
   @ReactMethod
@@ -194,9 +244,6 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
               }
             });
   }
-
-
-
 
   @ReactMethod
   public void unlockAchievement(String id, final Promise promise) {
