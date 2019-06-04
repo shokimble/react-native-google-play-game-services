@@ -90,11 +90,11 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
           GoogleSignInAccount account = task.getResult(ApiException.class);
           onConnected(account);
           if (signInPromise != null)
-            handSignInResult(promise);
+            handleSignInResult(promise);
 
         } catch (ApiException apiException) {
           onDisconnected();
-          handSignInResult(promise, true);
+          handleSignInResult(promise, true);
         }
       }
     }
@@ -140,25 +140,40 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
                 if (task.isSuccessful()) {
                   Log.d(TAG, "signInSilently(): success");
                   onConnected(task.getResult());
-                  handSignInResult(promise);
+                  handleSignInResult(promise);
                 } else {
                   Log.d(TAG, "signInSilently(): failure", task.getException());
                   onDisconnected();
-                  handSignInResult(promise, true);
+                  handleSignInResult(promise, true);
                 }
               }
             }
     );
   }
 
-  private void handSignInResult(final Promise promise, boolean isPreFailed = false)
+  private void handleSignInResult(final Promise promise, boolean isPreFailed = false)
   {
     if (!isPreFailed)
     {
       mPlayersClient.getCurrentPlayer().addOnSuccessListener(new OnSuccessListener<Player>() {
         @Override
         public void onSuccess(Player player) {
-          promise.resolve(player.getPlayerId());
+
+          JSONObject result = new JSONObject();
+          JSONObject userInfo = new JSONObject();
+
+          try {
+            userInfo.put("google_id", player.getPlayerId());
+            userInfo.put("name", player.getDisplayName());
+            userInfo.put("avatar_url", player.getIconImageUri());
+            result.put("result", true);
+            result.put("data", userInfo);
+
+          } catch (JSONException e) {
+            e.printStackTrace();
+          }
+
+          promise.resolve(result.toString());
         }
       })
       .addOnFailureListener(new OnFailureListener()
@@ -166,7 +181,7 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
         @Override
         public void onFailure(Exception e) {
           onDisconnected();
-          handSignInResult(promise, true);
+          handleSignInResult(promise, true);
         }
       });
     }
@@ -174,7 +189,16 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
     {
       if (promise != null)
       {
-        promise.reject("silent sign in failed");
+        JSONObject result = new JSONObject();
+
+        try {
+          result.put("result", false);
+
+        } catch (JSONException e) {
+          e.printStackTrace();
+        }
+
+        promise.reject(result.toString());
       }
     }
   }
@@ -220,9 +244,6 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
               }
             });
   }
-
-
-
 
   @ReactMethod
   public void unlockAchievement(String id, final Promise promise) {
