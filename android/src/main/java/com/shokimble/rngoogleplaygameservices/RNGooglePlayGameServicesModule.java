@@ -1,4 +1,3 @@
-
 package com.shokimble.rngoogleplaygameservices;
 
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -31,6 +30,7 @@ import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInClient;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
 import com.google.android.gms.common.api.ApiException;
+import com.google.android.gms.games.*;
 import com.google.android.gms.games.AchievementsClient;
 import com.google.android.gms.games.AnnotatedData;
 import com.google.android.gms.games.EventsClient;
@@ -142,7 +142,20 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
                 if (task.isSuccessful()) {
                   Log.d(TAG, "signInSilently(): success");
                   onConnected(task.getResult());
-                  promise.resolve("silent sign in successful");
+                  mPlayersClient.getCurrentPlayer().addOnSuccessListener(new OnSuccessListener<Player>() {
+                    @Override
+                    public void onSuccess(Player player) {
+                      promise.resolve(player.getPlayerId());
+                    }
+                  })
+                  .addOnFailureListener(new OnFailureListener()
+                  {
+                    @Override
+                    public void onFailure(Exception e) {
+                      onDisconnected();
+                      promise.reject("silent sign in failed");
+                    }
+                  });
                 } else {
                   Log.d(TAG, "signInSilently(): failure", task.getException());
                   onDisconnected();
