@@ -24,8 +24,8 @@ import com.facebook.react.bridge.WritableNativeMap;
 import android.util.Log;
 import android.app.Activity;
 import android.content.Intent;
-import android.support.annotation.Nullable;
-import android.support.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.annotation.NonNull;
 
 import com.google.android.gms.auth.api.signin.GoogleSignIn;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
@@ -237,6 +237,22 @@ public class RNGooglePlayGameServicesModule extends ReactContextBaseJavaModule {
   }
 
   /////////////////////////////////////////////////////////////////////////////
+
+  @ReactMethod
+  public void getUserId(final Promise promise) {
+    mPlayersClient.getCurrentPlayerId().addOnCompleteListener(getCurrentActivity(),
+            new OnCompleteListener<String>() {
+              @Override
+              public void onComplete(@NonNull Task<String> task) {
+                if (task.isSuccessful()) {
+                  promise.resolve(task.getResult());
+                } else {
+                  promise.reject("Get ID failed");
+                }
+              }
+            }
+    );
+  }
 
   @ReactMethod
   public void unlockAchievement(String id, final Promise promise) {
