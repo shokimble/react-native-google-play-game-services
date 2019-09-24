@@ -183,7 +183,10 @@ RNGooglePlayGameServices.signOut()
         .then((msg) => { console.log("signed out - ",msg)})
 		.catch((msg) => { console.log("not signed out - ",msg)});
 
-
+// Get current player ID
+RNGooglePlayGameServices.getUserId()
+        .then(id => { console.log("ID:", id); })
+        .catch(err => { console.log("Error:", err); })
 
 ```
 
